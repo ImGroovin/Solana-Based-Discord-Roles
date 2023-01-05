@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</head>
+<body>
+    <div>
+        <div id="link_status">Processing request</div>
+    </div>
+
+<script>
+  window.onload = () => {
+  
+    async function LoadWallet() {
+        // Request a connection to the default Solana Wallet
+        let walletConn = await solana.connect();
+        userPublicKey = walletConn.publicKey;
+
+		const unsignedMessage = `Some fancy test message.`;
+		const encodedMessage = new TextEncoder().encode(unsignedMessage);
+		const signedMessage = await solana.signMessage(encodedMessage, "utf8");
+		const signatureBase64 = btoa(String.fromCharCode.apply(null,signedMessage.signature));
+		fetch('http://localhost:53321/link', {
+			headers: {
+				tokenType: `${tokenType}`,
+				accessToken: `${accessToken}`,
+				signature: `${signatureBase64}`,
+				publickey: `${signedMessage.publicKey}`,
+			},
+		})
+		.then(result => result.json())
+		.then(response => {
+			console.log(response.status);
+			document.getElementById("link_status").innerHTML = response.status;
+		})
+		.catch(console.error);
+	}
+	
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const [accessToken, tokenType] = [fragment.get('access_token'), fragment.get('token_type')];
+
+    if (!accessToken) {
+        window.location.href('/')
+    }
+	
+	LoadWallet();
+};
+</script>
+</body>
+</html>
